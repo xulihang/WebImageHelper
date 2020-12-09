@@ -1,0 +1,170 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=getImage.js
+File2=ImageDownloader.bjl
+File3=ImageLinks.bjl
+File4=ImagePaste.bjl
+File5=ImageViewer.bjl
+File6=main.bjl
+File7=TextArea.bjl
+FileGroup1=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+Group=Default Group
+Library1=jcore
+Library2=jfx
+Library3=javaobject
+Library4=jokhttputils2
+Library5=json
+Library6=b4xcollections
+Library7=jstringutils
+Library8=xui views
+Module1=ImageDownloader
+Module2=ImagePaste
+Module3=Utils
+NumberOfFiles=7
+NumberOfLibraries=8
+NumberOfModules=3
+Version=7.8
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private URLTextField As TextField
+	Private WebView1 As WebView
+	Private MenuBar1 As MenuBar
+	Private currentX As Int
+	Private currentY As Int
+	Private currentSrcList As List
+	Private srcMap As Map
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("main") 'Load the layout file.
+	MainForm.Show
+	currentSrcList.Initialize
+	srcMap.Initialize
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+Sub WebView1_LocationChanged (Location As String)
+	URLTextField.Text=Location
+End Sub
+
+Sub WebView1_PageFinished (Url As String)
+	
+End Sub
+
+Sub GoButton_MouseClicked (EventData As MouseEvent)
+	WebView1.LoadUrl(URLTextField.Text)
+End Sub
+
+Sub MenuBar1_Action
+	Dim mi As MenuItem=Sender
+	Select mi.Text
+		Case "Show ImageDownloader"
+			Dim imgdownloader As ImageDownloader
+			imgdownloader.Initialize
+			imgdownloader.SetList(currentSrcList)
+			imgdownloader.Show
+		Case "Get the src of the image in the current cursor position"
+			Dim src As String=getCurrentImageSrc
+			currentSrcList.Clear
+			currentSrcList.Add(src)
+			Log(src)
+			fx.Clipboard.SetString(src)
+		Case "Get src of all images"
+			Dim sb As StringBuilder
+			sb.Initialize
+			Dim jsFunctions As String=File.ReadString(File.DirAssets,"getImage.js")
+			RunJS(jsFunctions)
+			Dim srcArrayString As String=asJO(RunJS($"getAllImageSrc()"$)).RunMethod("toString",Null)
+			Log(srcArrayString)
+			Dim srcSet As B4XSet
+			srcSet.Initialize
+			For Each src As String In Regex.Split(",",srcArrayString)
+				If srcSet.Contains(src)=False Then
+					sb.Append(src).Append(CRLF)
+				End If
+				srcSet.Add(src)
+			Next
+			currentSrcList.Clear
+			currentSrcList.AddAll(srcSet.AsList)
+			Log(currentSrcList)
+			fx.Clipboard.SetString(sb.ToString)
+		Case "Copy the image in the current cursor position to clipboard"
+			Dim src As String=getCurrentImageSrc
+			wait for (Utils.DownloadImage(src)) Complete (img As Image)
+			fx.Clipboard.SetImage(img)
+		Case "Replace the image in the current cursor position with clipboard"
+			Dim src As String=getCurrentImageSrc
+			Try
+				Dim img As Image
+				img=fx.Clipboard.GetImage
+				ReplaceImage(src,Utils.Image2Base64(img))
+			Catch
+				Log(LastException)
+			End Try
+	End Select
+End Sub
+
+Sub getCurrentImageSrc As String
+	Log(currentX)
+	Log(currentY)
+	Dim jsFunctions As String=File.ReadString(File.DirAssets,"getImage.js")
+	RunJS(jsFunctions)
+	Dim src As String=RunJS($"getImageSrc(${currentX},${currentY})"$)
+	Log(src)
+	Return src
+End Sub
+
+Sub asJO(o As JavaObject) As JavaObject
+	Return o
+End Sub
+
+Sub GetHTML As String
+	Dim we As JavaObject
+	we = asJO(WebView1).RunMethod("getEngine",Null)
+	Dim js As String=$"document.getElementsByTagName("body")[0].innerHTML"$
+	Return we.RunMethod("executeScript",Array As String(js))
+End Sub
+
+Sub WebView1_MouseMoved (EventData As MouseEvent)
+	currentX = EventData.X
+	currentY = EventData.Y
+End Sub
+
+Sub RunJS(js As String) As Object
+	Dim wvJO As JavaObject=WebView1
+	Dim we As JavaObject
+	we = wvJO.RunMethod("getEngine",Null)
+	Dim jsobject As JavaObject 'netscape.javascript.JSObject
+	jsobject=we.RunMethod("executeScript",Array As String(js))
+	'Log(jsobject)
+	'Log(GetType(jsobject))
+	Return jsobject
+End Sub
+
+
+Public Sub ReplaceImage(src1 As String,src2 As String)
+	Dim replacedSrc As String=srcMap.GetDefault(src1,src1)
+	Dim js As String=$"replaceImgSrc("${src1}","${replacedSrc}","${src2}")"$
+	Log(js)
+	RunJS(js)
+	srcMap.Put(src1,src2)
+End Sub
+

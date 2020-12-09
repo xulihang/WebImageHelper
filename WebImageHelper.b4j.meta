@@ -1,0 +1,15 @@
+﻿ModuleBookmarks0=
+ModuleBookmarks1=
+ModuleBookmarks2=
+ModuleBookmarks3=
+ModuleBreakpoints0=
+ModuleBreakpoints1=
+ModuleBreakpoints2=
+ModuleBreakpoints3=
+ModuleClosedNodes0=
+ModuleClosedNodes1=
+ModuleClosedNodes2=
+ModuleClosedNodes3=
+NavigationStack=ImageDownloader,ListView1_Action,84,1,ImagePaste,PasteButton_MouseClicked,25,0,ImageDownloader,DownloadAllButton_MouseClicked,69,0,ImageDownloader,Initialize,20,0,ImageDownloader,ListView1_SelectedIndexChanged,40,0,Utils,DirectDownload,43,5,Utils,DownloadImage,22,6,Main,MenuBar1_Action,77,6,Utils,Base642Image,16,6,Main,getCurrentImageSrc,93,6,Main,ReplaceImage,132,1
+SelectedBuild=0
+VisibleModules=1,2,3
